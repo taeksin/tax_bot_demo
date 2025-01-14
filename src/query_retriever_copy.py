@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -34,26 +35,37 @@ rag_chain = (
     | StrOutputParser()
 )
 
-# 질문 반복 처리
-while True:
-    question = input("\n 질문을 입력하세요 (종료하려면 'c', 'C' 또는 'ㅊ' 입력): ")
-    if question.lower() in ["c", "ㅊ"]:
-        print("Q&A 루프를 종료합니다.")
-        break
+# Streamlit 앱 설정
+st.set_page_config(page_title="RAG 기반 챗봇", page_icon="🤖", layout="wide")
 
-    # 리트리버에서 문서 검색
+st.title("📄 RAG 기반 세무사 챗봇")
+st.write("질문을 입력하면 관련 문서를 검색하고 답변을 생성합니다.")
+
+# 사용자 입력 폼
+with st.form("chat_form"):
+    question = st.text_input("질문을 입력하세요:", placeholder="예: 대학원생인 배우자가 연구비로 500만원을 받은 경우...")
+    submit_button = st.form_submit_button(label="질문하기")
+
+if submit_button and question:
+    # 문서 검색
     retrieved_documents = retriever.invoke(question)
 
     # 검색된 문서가 없을 경우 처리
     if not retrieved_documents:
-        print("\n관련 문서를 찾을 수 없습니다.")
-        continue
+        st.warning("관련 문서를 찾을 수 없습니다. 다른 질문을 입력해주세요.")
+    else:
+        # 리트리버된 문서를 Expand로 출력
+        st.subheader("🔍 검색된 문서")
+        for idx, doc in enumerate(retrieved_documents, 1):
+            with st.expander(f"문서 {idx}: {doc.metadata.get('제목', '제목 없음')}"):
+                st.write(f"**제목:** {doc.metadata.get('제목', '없음')}")
+                st.write(f"**본문:** {doc.page_content}")
+                st.write(f"**출처:** {doc.metadata.get('source', '출처 없음')}")
 
-    # 리트리버된 문서 출력
-    print("\n리트리버된 문서:")
-    for idx, doc in enumerate(retrieved_documents, 1):
-        print(f"문서 {idx}:\n제목: {doc.metadata.get('제목', '없음')}\n본문: {doc.page_content}\n출처: {doc.metadata.get('source', '출처 없음')}\n")
+        # RAG를 사용하여 응답 생성
+        with st.spinner("답변 생성 중..."):
+            response = rag_chain.invoke(question)
 
-    # RAG를 사용하여 응답 생성
-    response = rag_chain.invoke(question)
-    print("\n응답:", response)
+        # 응답 출력
+        st.subheader("💡 생성된 답변")
+        st.write(response)
