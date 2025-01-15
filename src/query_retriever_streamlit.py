@@ -23,7 +23,7 @@ embedding_model = OpenAIEmbeddings(model="text-embedding-3-small")
 vectorstore = FAISS.load_local("vdb/faiss_index", embeddings=embedding_model, allow_dangerous_deserialization=True)
 
 # lambda_mult가 크면 정확도 향상, 작으면 다양성 향상
-retriever = vectorstore.as_retriever(search_type='mmr', search_kwargs={'k': 10, 'fetch_k': 20, 'lambda_mult': 0.9})
+retriever = vectorstore.as_retriever(search_type='mmr', search_kwargs={'k': 5, 'fetch_k': 10, 'lambda_mult': 0.9})
 
 # RAG 구성 요소 설정
 prompt = hub.pull("rlm/rag-prompt")
@@ -43,7 +43,7 @@ st.write("질문을 입력하면 관련 문서를 검색하고 답변을 생성�
 
 # 사용자 입력 폼
 with st.form("chat_form"):
-    question = st.text_input("질문을 입력하세요:", placeholder="예: 대학원생인 배우자가 연구비로 500만원을 받은 경우...")
+    question = st.text_input("질문을 입력하세요:", placeholder="예: 대학원생인 배우자가 2024년 6월에 연구용역비로 500만원을 받은 경우 배우자공제가 가능해?")
     submit_button = st.form_submit_button(label="질문하기")
 
 if submit_button and question:
@@ -63,7 +63,7 @@ if submit_button and question:
         st.write(response)
         
         # 리트리버된 문서를 Expand로 출력
-        st.subheader("🔍 검색된 문서")
+        st.subheader("🔍 참조한 문서")
         for idx, doc in enumerate(retrieved_documents, 1):
             with st.expander(f"문서 {idx}: {doc.metadata.get('제목', '제목 없음')}"):
                 st.write(f"**제목:** {doc.metadata.get('제목', '없음')}")
