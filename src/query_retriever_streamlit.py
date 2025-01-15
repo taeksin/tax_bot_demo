@@ -54,6 +54,14 @@ if submit_button and question:
     if not retrieved_documents:
         st.warning("관련 문서를 찾을 수 없습니다. 다른 질문을 입력해주세요.")
     else:
+        # RAG를 사용하여 응답 생성
+        with st.spinner("답변 생성 중..."):
+            response = rag_chain.invoke(question)
+            
+        # 응답 출력
+        st.subheader("💡 생성된 답변")
+        st.write(response)
+        
         # 리트리버된 문서를 Expand로 출력
         st.subheader("🔍 검색된 문서")
         for idx, doc in enumerate(retrieved_documents, 1):
@@ -61,11 +69,3 @@ if submit_button and question:
                 st.write(f"**제목:** {doc.metadata.get('제목', '없음')}")
                 st.write(f"**본문:** {doc.page_content}")
                 st.write(f"**출처:** {doc.metadata.get('source', '출처 없음')}")
-
-        # RAG를 사용하여 응답 생성
-        with st.spinner("답변 생성 중..."):
-            response = rag_chain.invoke(question)
-
-        # 응답 출력
-        st.subheader("💡 생성된 답변")
-        st.write(response)
